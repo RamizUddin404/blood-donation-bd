@@ -20,12 +20,17 @@
     <!-- Edit Modal -->
     <div id="edit-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
         <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-2xl">
-            <h3 class="text-lg font-bold mb-4">Edit Donor</h3>
+            <h3 class="text-lg font-bold mb-4">Edit Full Donor Profile</h3>
             <input type="hidden" id="edit-id">
-            <input type="text" id="edit-name" class="w-full p-2 border rounded mb-2" placeholder="Name">
-            <input type="text" id="edit-phone" class="w-full p-2 border rounded mb-2" placeholder="Phone">
-            <button onclick="saveEdit()" class="bg-green-600 text-white px-4 py-2 rounded">Save</button>
-            <button onclick="toggleEditModal(false)" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+            <input type="text" id="edit-name" class="w-full p-2 border rounded mb-2" placeholder="Full Name">
+            <input type="text" id="edit-phone" class="w-full p-2 border rounded mb-2" placeholder="Phone Number">
+            <input type="text" id="edit-group" class="w-full p-2 border rounded mb-2" placeholder="Blood Group">
+            <input type="text" id="edit-district" class="w-full p-2 border rounded mb-2" placeholder="District">
+            <input type="text" id="edit-upazila" class="w-full p-2 border rounded mb-4" placeholder="Upazila/Thana">
+            <div class="flex gap-2">
+                <button onclick="saveEdit()" class="flex-1 bg-green-600 text-white px-4 py-2 rounded">Save Changes</button>
+                <button onclick="toggleEditModal(false)" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -46,9 +51,9 @@
                 for(let id in donors) {
                     const d = donors[id];
                     list.innerHTML += `<div class="bg-white p-4 flex justify-between items-center rounded shadow">
-                        <span>${d.name} (${d.phone})</span>
+                        <span><strong>${d.name}</strong> - ${d.bloodGroup} - ${d.district}, ${d.upazila} (${d.phone})</span>
                         <div>
-                            <button onclick="openEdit('${id}', '${d.name}', '${d.phone}')" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">Edit</button>
+                            <button onclick="openEdit('${id}', '${d.name}', '${d.phone}', '${d.bloodGroup}', '${d.district}', '${d.upazila}')" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">Edit</button>
                             <button onclick="deleteDonor('${id}')" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
                         </div>
                     </div>`;
@@ -56,10 +61,13 @@
             });
         }
         
-        function openEdit(id, name, phone) {
+        function openEdit(id, name, phone, group, district, upazila) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-phone').value = phone;
+            document.getElementById('edit-group').value = group;
+            document.getElementById('edit-district').value = district;
+            document.getElementById('edit-upazila').value = upazila;
             toggleEditModal(true);
         }
         
@@ -69,7 +77,10 @@
             const id = document.getElementById('edit-id').value;
             db.ref('donors/'+id).update({
                 name: document.getElementById('edit-name').value,
-                phone: document.getElementById('edit-phone').value
+                phone: document.getElementById('edit-phone').value,
+                bloodGroup: document.getElementById('edit-group').value,
+                district: document.getElementById('edit-district').value,
+                upazila: document.getElementById('edit-upazila').value
             }).then(() => { toggleEditModal(false); alert('Updated!'); });
         }
         

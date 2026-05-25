@@ -65,22 +65,25 @@ const BD_LOCATIONS = {
     "Rangamati": ["Bagaichhari", "Barkal", "Kawkhali", "Belaichhari", "Kaptai", "Jurachhari", "Langadu", "Naniyachar", "Rajasthali", "Rangamati Sadar"]
 };
 
-// Configuration for GitHub Persistence
-const CONFIG = {
-    GITHUB_TOKEN: localStorage.getItem('gh_token') || '',
-    REPO_OWNER: 'RamizUddin404',
-    REPO_NAME: 'blood-donation-bd',
-    FILE_PATH: 'donors.json'
+// Firebase Configuration
+const firebaseConfig = {
+    projectId: "blood-donation-bd-d7f6b",
+    databaseURL: "https://blood-donation-bd-d7f6b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    messagingSenderId: "1082770289749",
 };
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 let allDonors = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     populateDistricts();
-    loadDonors();
-    setupForm();
     setupLocationChain();
+    setupForm();
+    listenForDonors();
 });
 
 function populateDistricts() {
@@ -99,12 +102,9 @@ function populateDistricts() {
 }
 
 function setupLocationChain() {
-    // Chain for Search Filters
     document.getElementById('filter-district').addEventListener('change', (e) => {
         updateUpazilaOptions('filter-upazila', e.target.value);
     });
-
-    // Chain for Registration Form
     document.getElementById('reg-district').addEventListener('change', (e) => {
         updateUpazilaOptions('reg-upazila', e.target.value);
     });
@@ -124,31 +124,18 @@ function updateUpazilaOptions(targetId, district) {
     }
 }
 
-async function loadDonors() {
+function listenForDonors() {
     const grid = document.getElementById('donor-grid');
-    grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500"><i class="fas fa-circle-notch fa-spin mr-2"></i> Fetching from global database...</div>';
+    grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500"><i class="fas fa-circle-notch fa-spin mr-2"></i> Syncing with Realtime Cloud...</div>';
 
-    try {
-        // ALWAYS fetch from Public GitHub Raw URL first for universal visibility
-        const publicUrl = `https://raw.githubusercontent.com/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/master/${CONFIG.FILE_PATH}`;
-        const response = await fetch(publicUrl + '?t=' + Date.now()); // Prevent caching
-        
-        if (!response.ok) throw new Error('Global database not reachable');
-        
-        const data = await response.json();
-        allDonors = data;
+    db.ref('donors').on('value', (snapshot) => {
+        const data = snapshot.val();
+        allDonors = data ? Object.values(data).reverse() : [];
         renderDonors(allDonors);
-
-        // Also fetch SHA in background if token exists (for future updates)
-        if (CONFIG.GITHUB_TOKEN) {
-            fetch(`https://api.github.com/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/contents/${CONFIG.FILE_PATH}`, {
-                headers: { 'Authorization': `token ${CONFIG.GITHUB_TOKEN}` }
-            }).then(res => res.json()).then(json => localStorage.setItem('gh_sha', json.sha));
-        }
-    } catch (error) {
-        console.error('Error loading donors:', error);
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Global sync failed. Showing offline data.</div>';
-    }
+    }, (error) => {
+        console.error("Firebase Error:", error);
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Cloud access denied. Please set rules to public in Firebase Console.</div>';
+    });
 }
 
 function renderDonors(donors) {
@@ -158,7 +145,7 @@ function renderDonors(donors) {
     countLabel.textContent = `${donors.length} active donors in BD`;
 
     if (donors.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-400">No donors found for this location.</div>';
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-400">No donors found. Be the first to register!</div>';
         return;
     }
 
@@ -202,7 +189,7 @@ function applyFilters() {
 
 function setupForm() {
     const form = document.getElementById('register-form');
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', (e) => {
         e.preventDefault();
         
         const newDonor = {
@@ -214,49 +201,17 @@ function setupForm() {
             phone: document.getElementById('reg-phone').value,
             lastDonation: document.getElementById('reg-date').value
         };
-if (CONFIG.GITHUB_TOKEN) {
-    await saveToGitHub(newDonor);
-} else {
-    // Local fallback
-    allDonors.unshift(newDonor);
-    renderDonors(allDonors);
-    toggleModal('register-modal');
-    alert('নিবন্ধন সফল! তবে এটি গ্লোবাল ডাটাবেসে সেভ হয়নি কারণ আপনি টোকেন সেট করেননি। গ্লোবাল সেভ করতে ব্রাউজার কনসোলে টোকেন দিন।');
-}    });
-}
 
-async function saveToGitHub(newDonor) {
-    try {
-        const updatedList = [newDonor, ...allDonors];
-        const sha = localStorage.getItem('gh_sha');
-
-        const response = await fetch(`https://api.github.com/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/contents/${CONFIG.FILE_PATH}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: `Donor Reg: ${newDonor.name} (${newDonor.district})`,
-                content: btoa(unescape(encodeURIComponent(JSON.stringify(updatedList, null, 2)))),
-                sha: sha
+        db.ref('donors').push(newDonor)
+            .then(() => {
+                toggleModal('register-modal');
+                alert('Success! Donor added to global network.');
             })
-        });
-
-        if (response.ok) {
-            const resJson = await response.json();
-            localStorage.setItem('gh_sha', resJson.content.sha);
-            allDonors = updatedList;
-            renderDonors(allDonors);
-            toggleModal('register-modal');
-            alert('Cloud Sync Successful! You are now an active donor.');
-        } else {
-            throw new Error('Update Failed');
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Sync failed. Check your GitHub settings.');
-    }
+            .catch((err) => {
+                console.error(err);
+                alert('Failed to save. Make sure Realtime Database rules are set to public.');
+            });
+    });
 }
 
 function toggleModal(id) {

@@ -220,15 +220,30 @@ function setupForm() {
     });
 }
 
-let currentLang = 'en';
+let currentLang = localStorage.getItem('lang') || 'en';
+
+function applyLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+    document.querySelectorAll('[data-en]').forEach(el => {
+        el.textContent = el.getAttribute(`data-${lang}`);
+    });
+    // Translate placeholders
+    document.querySelectorAll('[data-placeholder-en]').forEach(el => {
+        el.placeholder = el.getAttribute(`data-placeholder-${lang}`);
+    });
+    document.body.classList.toggle('lang-bn', lang === 'bn');
+}
 
 function toggleLang() {
-    currentLang = currentLang === 'en' ? 'bn' : 'en';
-    document.querySelectorAll('[data-en]').forEach(el => {
-        el.textContent = el.getAttribute(`data-${currentLang}`);
-    });
-    document.body.classList.toggle('lang-bn', currentLang === 'bn');
+    applyLang(currentLang === 'en' ? 'bn' : 'en');
 }
+
+// Initialize lang on load
+document.addEventListener('DOMContentLoaded', () => {
+    applyLang(currentLang);
+    // ... rest of init
+});
 
 function toggleModal(id) {
     const modal = document.getElementById(id);

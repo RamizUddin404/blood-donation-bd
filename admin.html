@@ -20,7 +20,7 @@
     <!-- Edit Modal -->
     <div id="edit-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
         <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-2xl">
-            <h3 class="text-lg font-bold mb-4">Edit Full Donor Profile</h3>
+            <h3 class="text-lg font-bold mb-4">Edit Donor Profile</h3>
             <input type="hidden" id="edit-id">
             <input type="text" id="edit-name" class="w-full p-2 border rounded mb-2" placeholder="Full Name">
             <input type="text" id="edit-phone" class="w-full p-2 border rounded mb-2" placeholder="Phone Number">
@@ -40,20 +40,23 @@
         const firebaseConfig = { projectId: "blood-donation-bd-d7f6b", databaseURL: "https://blood-donation-bd-d7f6b-default-rtdb.asia-southeast1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        
+        // Global object to store donor data safely
+        let donorsData = {};
 
         function checkPass() { if(document.getElementById('password').value === "admin123") { document.getElementById('login').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); loadAdminDonors(); } else { alert('Wrong password'); } }
         
         function loadAdminDonors() {
             db.ref('donors').on('value', (snap) => {
-                const donors = snap.val();
+                donorsData = snap.val() || {};
                 const list = document.getElementById('admin-donor-list');
                 list.innerHTML = '';
-                for(let id in donors) {
-                    const d = donors[id];
+                for(let id in donorsData) {
+                    const d = donorsData[id];
                     list.innerHTML += `<div class="bg-white p-4 flex justify-between items-center rounded shadow">
                         <span><strong>${d.name}</strong> - ${d.bloodGroup} - ${d.district}, ${d.upazila} (${d.phone})</span>
                         <div>
-                            <button onclick="openEdit('${id}', '${d.name}', '${d.phone}', '${d.bloodGroup}', '${d.district}', '${d.upazila}')" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">Edit</button>
+                            <button onclick="openEdit('${id}')" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">Edit</button>
                             <button onclick="deleteDonor('${id}')" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
                         </div>
                     </div>`;
@@ -61,13 +64,15 @@
             });
         }
         
-        function openEdit(id, name, phone, group, district, upazila) {
+        function openEdit(id) {
+            const d = donorsData[id];
+            if(!d) return;
             document.getElementById('edit-id').value = id;
-            document.getElementById('edit-name').value = name;
-            document.getElementById('edit-phone').value = phone;
-            document.getElementById('edit-group').value = group;
-            document.getElementById('edit-district').value = district;
-            document.getElementById('edit-upazila').value = upazila;
+            document.getElementById('edit-name').value = d.name || '';
+            document.getElementById('edit-phone').value = d.phone || '';
+            document.getElementById('edit-group').value = d.bloodGroup || '';
+            document.getElementById('edit-district').value = d.district || '';
+            document.getElementById('edit-upazila').value = d.upazila || '';
             toggleEditModal(true);
         }
         
@@ -81,7 +86,7 @@
                 bloodGroup: document.getElementById('edit-group').value,
                 district: document.getElementById('edit-district').value,
                 upazila: document.getElementById('edit-upazila').value
-            }).then(() => { toggleEditModal(false); alert('Updated!'); });
+            }).then(() => { toggleEditModal(false); alert('Updated Successfully!'); });
         }
         
         function deleteDonor(id) { if(confirm('Delete this donor?')) db.ref('donors/'+id).remove(); }

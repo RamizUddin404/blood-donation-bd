@@ -11,17 +11,33 @@
         <input type="password" id="password" class="w-full p-2 border rounded mb-4" placeholder="Enter Password">
         <button onclick="checkPass()" class="w-full bg-red-600 text-white p-2 rounded">Login</button>
     </div>
+    
     <div id="admin-panel" class="hidden max-w-6xl mx-auto">
         <h2 class="text-2xl font-bold mb-4">Manage Donors</h2>
         <div id="admin-donor-list" class="grid gap-4"></div>
     </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">Edit Donor</h3>
+            <input type="hidden" id="edit-id">
+            <input type="text" id="edit-name" class="w-full p-2 border rounded mb-2" placeholder="Name">
+            <input type="text" id="edit-phone" class="w-full p-2 border rounded mb-2" placeholder="Phone">
+            <button onclick="saveEdit()" class="bg-green-600 text-white px-4 py-2 rounded">Save</button>
+            <button onclick="toggleEditModal(false)" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script>
         const firebaseConfig = { projectId: "blood-donation-bd-d7f6b", databaseURL: "https://blood-donation-bd-d7f6b-default-rtdb.asia-southeast1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+
         function checkPass() { if(document.getElementById('password').value === "admin123") { document.getElementById('login').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); loadAdminDonors(); } else { alert('Wrong password'); } }
+        
         function loadAdminDonors() {
             db.ref('donors').on('value', (snap) => {
                 const donors = snap.val();
@@ -29,10 +45,34 @@
                 list.innerHTML = '';
                 for(let id in donors) {
                     const d = donors[id];
-                    list.innerHTML += `<div class="bg-white p-4 flex justify-between items-center rounded shadow"><span>${d.name} (${d.phone})</span><button onclick="deleteDonor('${id}')" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button></div>`;
+                    list.innerHTML += `<div class="bg-white p-4 flex justify-between items-center rounded shadow">
+                        <span>${d.name} (${d.phone})</span>
+                        <div>
+                            <button onclick="openEdit('${id}', '${d.name}', '${d.phone}')" class="bg-blue-500 text-white px-3 py-1 rounded mr-2">Edit</button>
+                            <button onclick="deleteDonor('${id}')" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+                        </div>
+                    </div>`;
                 }
             });
         }
+        
+        function openEdit(id, name, phone) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-phone').value = phone;
+            toggleEditModal(true);
+        }
+        
+        function toggleEditModal(show) { document.getElementById('edit-modal').classList.toggle('hidden', !show); }
+        
+        function saveEdit() {
+            const id = document.getElementById('edit-id').value;
+            db.ref('donors/'+id).update({
+                name: document.getElementById('edit-name').value,
+                phone: document.getElementById('edit-phone').value
+            }).then(() => { toggleEditModal(false); alert('Updated!'); });
+        }
+        
         function deleteDonor(id) { if(confirm('Delete this donor?')) db.ref('donors/'+id).remove(); }
     </script>
 </body>

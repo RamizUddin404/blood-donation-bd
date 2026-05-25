@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - BloodAid BD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 p-8">
+    <div id="login" class="max-w-sm mx-auto bg-white p-8 rounded-xl shadow-md">
+        <h2 class="text-xl font-bold mb-4">Admin Login</h2>
+        <input type="password" id="password" class="w-full p-2 border rounded mb-4" placeholder="Enter Password">
+        <button onclick="checkPass()" class="w-full bg-red-600 text-white p-2 rounded">Login</button>
+    </div>
+    <div id="admin-panel" class="hidden max-w-6xl mx-auto">
+        <h2 class="text-2xl font-bold mb-4">Manage Donors</h2>
+        <div id="admin-donor-list" class="grid gap-4"></div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = { projectId: "blood-donation-bd-d7f6b", databaseURL: "https://blood-donation-bd-d7f6b-default-rtdb.asia-southeast1.firebasedatabase.app" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        function checkPass() { if(document.getElementById('password').value === "admin123") { document.getElementById('login').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); loadAdminDonors(); } else { alert('Wrong password'); } }
+        function loadAdminDonors() {
+            db.ref('donors').on('value', (snap) => {
+                const donors = snap.val();
+                const list = document.getElementById('admin-donor-list');
+                list.innerHTML = '';
+                for(let id in donors) {
+                    const d = donors[id];
+                    list.innerHTML += `<div class="bg-white p-4 flex justify-between items-center rounded shadow"><span>${d.name} (${d.phone})</span><button onclick="deleteDonor('${id}')" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button></div>`;
+                }
+            });
+        }
+        function deleteDonor(id) { if(confirm('Delete this donor?')) db.ref('donors/'+id).remove(); }
+    </script>
+</body>
+</html>

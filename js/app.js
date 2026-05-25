@@ -126,28 +126,28 @@ function updateUpazilaOptions(targetId, district) {
 
 async function loadDonors() {
     const grid = document.getElementById('donor-grid');
-    grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500"><i class="fas fa-circle-notch fa-spin mr-2"></i> Syncing with cloud database...</div>';
+    grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500"><i class="fas fa-circle-notch fa-spin mr-2"></i> Fetching from global database...</div>';
 
     try {
-        let data;
-        if (CONFIG.GITHUB_TOKEN && CONFIG.REPO_OWNER) {
-            const response = await fetch(`https://api.github.com/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/contents/${CONFIG.FILE_PATH}`, {
-                headers: { 'Authorization': `token ${CONFIG.GITHUB_TOKEN}` }
-            });
-            if (!response.ok) throw new Error('Repo not found');
-            const json = await response.json();
-            data = JSON.parse(atob(json.content));
-            localStorage.setItem('gh_sha', json.sha);
-        } else {
-            const response = await fetch('donors.json');
-            data = await response.json();
-        }
+        // ALWAYS fetch from Public GitHub Raw URL first for universal visibility
+        const publicUrl = `https://raw.githubusercontent.com/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/master/${CONFIG.FILE_PATH}`;
+        const response = await fetch(publicUrl + '?t=' + Date.now()); // Prevent caching
         
+        if (!response.ok) throw new Error('Global database not reachable');
+        
+        const data = await response.json();
         allDonors = data;
         renderDonors(allDonors);
+
+        // Also fetch SHA in background if token exists (for future updates)
+        if (CONFIG.GITHUB_TOKEN) {
+            fetch(`https://api.github.com/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/contents/${CONFIG.FILE_PATH}`, {
+                headers: { 'Authorization': `token ${CONFIG.GITHUB_TOKEN}` }
+            }).then(res => res.json()).then(json => localStorage.setItem('gh_sha', json.sha));
+        }
     } catch (error) {
         console.error('Error loading donors:', error);
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Failed to sync. Please set your GitHub Token in Browser Console.</div>';
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Global sync failed. Showing offline data.</div>';
     }
 }
 

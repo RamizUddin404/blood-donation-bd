@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloodAid BD - Professional Blood Donation Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .blood-gradient { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-card shadow-sm px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 blood-gradient rounded-xl flex items-center justify-center text-white shadow-lg">
+                <i class="fas fa-droplet text-xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Blood<span class="text-red-600">Aid</span> BD</h1>
+        </div>
+        <button onclick="toggleModal('register-modal')" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-full font-semibold transition-all shadow-md hover:shadow-lg">
+            Become a Donor
+        </button>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative overflow-hidden pt-16 pb-24 px-6 text-center">
+        <div class="max-w-4xl mx-auto relative z-10">
+            <span class="inline-block px-4 py-1.5 mb-6 text-sm font-semibold text-red-600 bg-red-50 rounded-full">Saving Lives Together</span>
+            <h2 class="text-5xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
+                Find Blood Donors <br/><span class="text-red-600 italic">Real-Time</span> in Bangladesh
+            </h2>
+            <p class="text-lg text-slate-600 mb-12 max-w-2xl mx-auto">
+                Connect with thousands of blood donors across 64 districts. Quick, reliable, and always updated via GitHub cloud.
+            </p>
+
+            <!-- Search Bar -->
+            <div class="glass-card p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-4xl mx-auto">
+                <div class="flex-1 relative">
+                    <i class="fas fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <select id="filter-district" class="w-full pl-11 pr-4 py-4 rounded-xl border-none focus:ring-2 focus:ring-red-500 bg-slate-50 appearance-none font-medium">
+                        <option value="">All Districts</option>
+                    </select>
+                </div>
+                <div class="flex-1 relative">
+                    <i class="fas fa-map-marker-alt absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <select id="filter-upazila" class="w-full pl-11 pr-4 py-4 rounded-xl border-none focus:ring-2 focus:ring-red-500 bg-slate-50 appearance-none font-medium">
+                        <option value="">All Upazilas/Thanas</option>
+                    </select>
+                </div>
+                <div class="w-full md:w-40 relative">
+                    <i class="fas fa-droplet absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <select id="filter-group" class="w-full pl-11 pr-4 py-4 rounded-xl border-none focus:ring-2 focus:ring-red-500 bg-slate-50 appearance-none font-medium">
+                        <option value="">Blood Group</option>
+                        <option value="A+">A+</option><option value="A-">A-</option>
+                        <option value="B+">B+</option><option value="B-">B-</option>
+                        <option value="O+">O+</option><option value="O-">O-</option>
+                        <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                    </select>
+                </div>
+                <button onclick="applyFilters()" class="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-slate-800 transition-colors">
+                    Search
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Donor List Section -->
+    <main class="max-w-6xl mx-auto px-6 py-12">
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h3 class="text-2xl font-bold text-slate-900">Available Donors</h3>
+                <p class="text-slate-500" id="donor-count">Loading donors...</p>
+            </div>
+            <button onclick="loadDonors()" class="text-slate-500 hover:text-red-600 transition-colors">
+                <i class="fas fa-rotate mr-2"></i> Refresh Data
+            </button>
+        </div>
+
+        <div id="donor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Skeleton Loader -->
+            <div class="animate-pulse bg-white p-6 rounded-2xl border border-slate-100 h-48"></div>
+            <div class="animate-pulse bg-white p-6 rounded-2xl border border-slate-100 h-48"></div>
+            <div class="animate-pulse bg-white p-6 rounded-2xl border border-slate-100 h-48"></div>
+        </div>
+    </main>
+
+    <!-- Registration Modal -->
+    <div id="register-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative">
+            <div class="blood-gradient p-8 text-white">
+                <button onclick="toggleModal('register-modal')" class="absolute top-6 right-6 text-white/80 hover:text-white">
+                    <i class="fas fa-xmark text-xl"></i>
+                </button>
+                <h3 class="text-2xl font-bold">Register as Donor</h3>
+                <p class="text-white/80 mt-1">Join our community and save lives.</p>
+            </div>
+            <form id="register-form" class="p-8 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
+                    <input type="text" id="reg-name" required class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500 bg-slate-50">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Blood Group</label>
+                        <select id="reg-group" required class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500 bg-slate-50">
+                            <option value="A+">A+</option><option value="A-">A-</option>
+                            <option value="B+">B+</option><option value="B-">B-</option>
+                            <option value="O+">O+</option><option value="O-">O-</option>
+                            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">District</label>
+                        <select id="reg-district" required class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500 bg-slate-50">
+                            <option value="">Select District</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Upazila/Thana</label>
+                    <select id="reg-upazila" required class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500 bg-slate-50">
+                        <option value="">Select Upazila</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Phone Number</label>
+                    <input type="tel" id="reg-phone" placeholder="01XXXXXXXXX" required class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500 bg-slate-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Last Donation</label>
+                    <input type="date" id="reg-date" class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500 bg-slate-50">
+                </div>
+                <button type="submit" class="w-full blood-gradient text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-red-200 hover:shadow-red-300 transition-all mt-4">
+                    Complete Registration
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+</body>
+</html>

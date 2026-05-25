@@ -224,3 +224,8 @@ function toggleModal(id) {
     const modal = document.getElementById(id);
     modal.classList.toggle('hidden');
 }
+
+function copyNumber(num) {
+    navigator.clipboard.writeText(num);
+    alert('Number copied to clipboard: ' + num);
+}

@@ -220,6 +220,16 @@ function setupForm() {
     });
 }
 
+let currentLang = 'en';
+
+function toggleLang() {
+    currentLang = currentLang === 'en' ? 'bn' : 'en';
+    document.querySelectorAll('[data-en]').forEach(el => {
+        el.textContent = el.getAttribute(`data-${currentLang}`);
+    });
+    document.body.classList.toggle('lang-bn', currentLang === 'bn');
+}
+
 function toggleModal(id) {
     const modal = document.getElementById(id);
     modal.classList.toggle('hidden');

@@ -214,15 +214,15 @@ function setupForm() {
             phone: document.getElementById('reg-phone').value,
             lastDonation: document.getElementById('reg-date').value
         };
-
-        if (CONFIG.GITHUB_TOKEN) {
-            await saveToGitHub(newDonor);
-        } else {
-            allDonors.unshift(newDonor);
-            renderDonors(allDonors);
-            alert('Registered locally! Please set GitHub token for global sync.');
-            toggleModal('register-modal');
-        }
+if (CONFIG.GITHUB_TOKEN) {
+    await saveToGitHub(newDonor);
+} else {
+    // Local test mode / Temporary persistence
+    allDonors.unshift(newDonor);
+    renderDonors(allDonors);
+    toggleModal('register-modal');
+    console.log('Registered locally. Set gh_token in localStorage for cloud sync.');
+}
     });
 }
 

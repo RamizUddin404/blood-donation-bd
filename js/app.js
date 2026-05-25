@@ -217,13 +217,12 @@ function setupForm() {
 if (CONFIG.GITHUB_TOKEN) {
     await saveToGitHub(newDonor);
 } else {
-    // Local test mode / Temporary persistence
+    // Local fallback
     allDonors.unshift(newDonor);
     renderDonors(allDonors);
     toggleModal('register-modal');
-    console.log('Registered locally. Set gh_token in localStorage for cloud sync.');
-}
-    });
+    alert('নিবন্ধন সফল! তবে এটি গ্লোবাল ডাটাবেসে সেভ হয়নি কারণ আপনি টোকেন সেট করেননি। গ্লোবাল সেভ করতে ব্রাউজার কনসোলে টোকেন দিন।');
+}    });
 }
 
 async function saveToGitHub(newDonor) {

@@ -68,8 +68,8 @@ const BD_LOCATIONS = {
 // Configuration for GitHub Persistence
 const CONFIG = {
     GITHUB_TOKEN: localStorage.getItem('gh_token') || '',
-    REPO_OWNER: localStorage.getItem('gh_owner') || '',
-    REPO_NAME: localStorage.getItem('gh_repo') || '',
+    REPO_OWNER: 'RamizUddin404',
+    REPO_NAME: 'blood-donation-bd',
     FILE_PATH: 'donors.json'
 };
 

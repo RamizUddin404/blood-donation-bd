@@ -65,16 +65,8 @@ const BD_LOCATIONS = {
     "Rangamati": ["Bagaichhari", "Barkal", "Kawkhali", "Belaichhari", "Kaptai", "Jurachhari", "Langadu", "Naniyachar", "Rajasthali", "Rangamati Sadar"]
 };
 
-// Firebase Configuration
-const firebaseConfig = {
-    projectId: "blood-donation-bd-d7f6b",
-    databaseURL: "https://blood-donation-bd-d7f6b-default-rtdb.asia-southeast1.firebasedatabase.app",
-    messagingSenderId: "1082770289749",
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// Simplified Firebase REST API Config
+const DB_URL = "https://blood-donation-bd-d7f6b-default-rtdb.asia-southeast1.firebasedatabase.app/donors.json";
 
 let allDonors = [];
 
@@ -83,7 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
     populateDistricts();
     setupLocationChain();
     setupForm();
-    listenForDonors();
+    loadDonors();
+    // Refresh every 30 seconds for "real-time" feel without SDK
+    setInterval(loadDonors, 30000);
 });
 
 function populateDistricts() {
@@ -124,24 +118,26 @@ function updateUpazilaOptions(targetId, district) {
     }
 }
 
-function listenForDonors() {
-    const grid = document.getElementById('donor-grid');
-    grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500"><i class="fas fa-circle-notch fa-spin mr-2"></i> Syncing with Realtime Cloud...</div>';
-
-    db.ref('donors').on('value', (snapshot) => {
-        const data = snapshot.val();
+async function loadDonors() {
+    try {
+        const response = await fetch(DB_URL + "?t=" + Date.now());
+        const data = await response.json();
         allDonors = data ? Object.values(data).reverse() : [];
         renderDonors(allDonors);
-    }, (error) => {
-        console.error("Firebase Error:", error);
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Cloud access denied. Please set rules to public in Firebase Console.</div>';
-    });
+    } catch (error) {
+        console.error("Fetch Error:", error);
+    }
 }
 
 function renderDonors(donors) {
     const grid = document.getElementById('donor-grid');
     const countLabel = document.getElementById('donor-count');
-    grid.innerHTML = '';
+    
+    // Only show loading if empty
+    if (grid.children.length === 0 || grid.innerHTML.includes('Syncing')) {
+        grid.innerHTML = '';
+    }
+    
     countLabel.textContent = `${donors.length} active donors in BD`;
 
     if (donors.length === 0) {
@@ -149,9 +145,11 @@ function renderDonors(donors) {
         return;
     }
 
+    // Surgical update: only clear and redraw if length changed or first load
+    grid.innerHTML = ''; 
     donors.forEach(donor => {
         const card = document.createElement('div');
-        card.className = 'bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group';
+        card.className = 'bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group animate-fade-in';
         card.innerHTML = `
             <div class="absolute top-0 right-0 w-16 h-16 blood-gradient opacity-5 rounded-bl-full group-hover:opacity-10 transition-opacity"></div>
             <div class="flex justify-between items-start mb-4">
@@ -189,7 +187,7 @@ function applyFilters() {
 
 function setupForm() {
     const form = document.getElementById('register-form');
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const newDonor = {
@@ -202,15 +200,23 @@ function setupForm() {
             lastDonation: document.getElementById('reg-date').value
         };
 
-        db.ref('donors').push(newDonor)
-            .then(() => {
+        try {
+            const response = await fetch(DB_URL, {
+                method: 'POST',
+                body: JSON.stringify(newDonor)
+            });
+
+            if (response.ok) {
                 toggleModal('register-modal');
                 alert('Success! Donor added to global network.');
-            })
-            .catch((err) => {
-                console.error(err);
-                alert('Failed to save. Make sure Realtime Database rules are set to public.');
-            });
+                loadDonors(); // Reload immediately
+            } else {
+                throw new Error('Save Failed');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Failed to save. Please ensure your Firebase Database rules are set to public.');
+        }
     });
 }
 

@@ -26,7 +26,8 @@
             <input type="text" id="edit-phone" class="w-full p-2 border rounded mb-2" placeholder="Phone Number">
             <input type="text" id="edit-group" class="w-full p-2 border rounded mb-2" placeholder="Blood Group">
             <input type="text" id="edit-district" class="w-full p-2 border rounded mb-2" placeholder="District">
-            <input type="text" id="edit-upazila" class="w-full p-2 border rounded mb-4" placeholder="Upazila/Thana">
+            <input type="text" id="edit-upazila" class="w-full p-2 border rounded mb-2" placeholder="Upazila/Thana">
+            <input type="date" id="edit-last-donation" class="w-full p-2 border rounded mb-4" placeholder="Last Donation Date">
             <div class="flex gap-2">
                 <button onclick="saveEdit()" class="flex-1 bg-green-600 text-white px-4 py-2 rounded">Save Changes</button>
                 <button onclick="toggleEditModal(false)" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
@@ -73,6 +74,7 @@
             document.getElementById('edit-group').value = d.bloodGroup || '';
             document.getElementById('edit-district').value = d.district || '';
             document.getElementById('edit-upazila').value = d.upazila || '';
+            document.getElementById('edit-last-donation').value = d.lastDonation || '';
             toggleEditModal(true);
         }
         
@@ -85,7 +87,8 @@
                 phone: document.getElementById('edit-phone').value,
                 bloodGroup: document.getElementById('edit-group').value,
                 district: document.getElementById('edit-district').value,
-                upazila: document.getElementById('edit-upazila').value
+                upazila: document.getElementById('edit-upazila').value,
+                lastDonation: document.getElementById('edit-last-donation').value
             }).then(() => { toggleEditModal(false); alert('Updated Successfully!'); });
         }
         
